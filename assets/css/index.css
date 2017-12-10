@@ -1,7 +1,7 @@
 #bottom-links {
     height: 3.2em;
     line-height: 3.2em;
-    position: absolute;
+    position: fixed;
     padding: 0.5em;
     bottom: 0;
     right: 0;
