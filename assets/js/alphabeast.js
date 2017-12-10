@@ -1,4 +1,4 @@
-const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const alphabet = "abcdefghijklmnopqrstuvwxyz";
 let alphaInput, alphaOutput, alphaStartButton;
 let alphaCurString;
 
@@ -58,7 +58,7 @@ function getRandomStrings(fromString) {
 }
 
 function alphabeast() {
-    alphaCurString = alphaInput.value;
+    alphaCurString = alphaInput.value.toLowerCase();
     updateAlphaElems();
     let stringArray = getRandomStrings(alphaCurString);
     let i = 0;
