@@ -1,135 +1,81 @@
-var alphabet = "abcdefghijklmnopqrstuvwxyz";
-var timesToIterate = 6;
+const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let alphaInput, alphaOutput, alphaStartButton;
+let alphaCurString;
 
-var alphaGet;
-var alphaStart;
-var alphaDownload;
-var alphaAppend;
+let alphaItems = 6;
+let alphaElems = [];
 
-var alphabeastCurrentData = [];
-
-function transformRandom(strToTransform) {
-    var chosenLetter = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-    var chosenPosition = Math.floor(Math.random() * strToTransform.length);
-    var sliceOne = strToTransform.slice(0, chosenPosition);
-    var sliceTwo = strToTransform.slice(chosenPosition + 1, strToTransform.length);
-
-    return {
-        returnString: sliceOne + chosenLetter + sliceTwo,
-        changedPosition: chosenPosition,
-        chosenLetter: chosenLetter
-    };
+function replaceString(string, index, replacement) {
+    return string.substr(0, index) + replacement + string.substr(index + replacement.length);
 }
 
-function underlineLetter(strToUnderline, underlinePoint) {
-    var sliceOne = strToUnderline.slice(0, underlinePoint);
-    var sliceTwo = strToUnderline.slice(underlinePoint, underlinePoint + 1);
-    var sliceThree = strToUnderline.slice(underlinePoint + 1, strToUnderline.length);
-    return sliceOne + "<a class='alpha-changed'>" + sliceTwo + "</a>" + sliceThree;
+function removeChar(string, index) {
+    return string.substr(0, index) + string.substr(index + 1);
 }
 
-function generateStringsFor(value) {
-    var genReturnArray = [];
-    for (var i = 0; i < timesToIterate; i++) {
-        var randomTransform = transformRandom(value);
-        genReturnArray.push(randomTransform);
-    }
-    return genReturnArray;
-}
-
-function startFunction() {
-    var currentInputVal = alphaGet.val();
-    if (currentInputVal.length > 0) {
-        alphaStart.hide();
-        alphaStart.empty().append("Regenerate");
-        alphaDownload.show();
-
-        var generatedStrings = generateStringsFor(currentInputVal);
-        for (var e = 0; e < generatedStrings.length; e++) {
-            var alphaE = $("#alpha" + e);
-            alphaE.empty();
-            alphaE.append(underlineLetter(generatedStrings[e].returnString, generatedStrings[e].changedPosition));
-        }
-        alphabeastCurrentData.push({
-            startWord: currentInputVal,
-            generatedStrings: generatedStrings
-        });
-    }
-}
-
-// Stole this from the internet
-function download(filename, text) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
-}
-
-function generateDownloadData(arrayToDownload) {
-    var generatedText = "Alphabeast program";
-    for (var i = 0; i < arrayToDownload.length; i++) {
-        var curArrPos = arrayToDownload[i];
-        generatedText += "\n\n[Iteration " + (i + 1) + "]";
-        generatedText += "\nStarting word: " + curArrPos.startWord;
-        generatedText += "\nGenerated words:";
-        for (var e = 0; e < curArrPos.generatedStrings.length; e++) {
-            var genStringsPos = curArrPos.generatedStrings[e];
-            generatedText += "\n----";
-            generatedText += "\n> Resulting word " + (e + 1) + ": " + genStringsPos.returnString;
-            generatedText += "\n  > Changed position: " + (genStringsPos.changedPosition + 1);
-            generatedText += "\n  > Letter changed to: " + genStringsPos.chosenLetter;
-        }
-        if (curArrPos.chosen !== undefined) {
-            generatedText += "\nChosen word: " + curArrPos.chosen;
+function updateAlphaElems() {
+    let i;
+    if (alphaElems.length > alphaItems) {
+        for (i = alphaElems.length - 1; alphaItems <= i; --i) alphaElems.pop().remove();
+    } else {
+        for (i = alphaElems.length; i < alphaItems; ++i) {
+            let liElem = document.createElement("li");
+            liElem.onclick = function () {
+                alphaInput.value = this.innerText;
+                alphabeast();
+            };
+            liElem.className += " alpha-li";
+            alphaElems.push(liElem);
+            alphaOutput.appendChild(liElem);
         }
     }
-    download("alphabeast.txt", generatedText);
 }
 
-window.onload = function () {
-    alphaGet = $("#alpha-get");
-    alphaStart = $("#alpha-start");
-    alphaDownload = $("#alpha-download");
-
-    alphaDownload.hide();
-    alphaDownload.removeClass("hide-at-start");
-
-    for (var i = 0; i < timesToIterate; i++) {
-        $("#alphabeast").append("<p class='alpha-append-container'><a class='alpha-append' id='alpha" + i + "' href='#'></a></p>");
+// Perhaps someday I should make duplicate removal work with multiple different change indices
+function getRandomStrings(fromString) {
+    const stringLength = fromString.length;
+    let stringArray = [fromString];
+    let i;
+    for (i = 0; i < alphaItems; ++i) {
+        const changeIndex = Math.floor(Math.random() * stringLength);
+        let tempAlphabet = alphabet;
+        let letterIndex = Math.floor(Math.random() * tempAlphabet.length);
+        let string = replaceString(fromString, changeIndex, tempAlphabet[letterIndex]);
+        // Never have duplicate strings
+        while (stringArray.indexOf(string) > -1 && tempAlphabet.length > 0) {
+            tempAlphabet = removeChar(tempAlphabet, letterIndex);
+            letterIndex = Math.floor(Math.random() * tempAlphabet.length);
+            string = replaceString(fromString, changeIndex, tempAlphabet[letterIndex]);
+        }
+        if (tempAlphabet.length > 0) {
+            stringArray.push(string);
+        }
     }
 
-    alphaAppend = $(".alpha-append");
+    // Shift to get rid of fromString
+    stringArray.shift();
+    return stringArray;
+}
 
-    alphaStart.click(function () {
-        alphabeastCurrentData = [];
-        startFunction();
+function alphabeast() {
+    alphaCurString = alphaInput.value;
+    updateAlphaElems();
+    let stringArray = getRandomStrings(alphaCurString);
+    let i = 0;
+    alphaElems.forEach(function (elem) {
+        elem.innerHTML = stringArray[i];
+        ++i;
     });
+}
 
-    alphaAppend.click(function () {
-        var thisJQuery = $(this);
-        var thisVal = thisJQuery.text();
+function alphaStart() {
+    console.log("Alphabeast started");
 
-        var currentPos = alphabeastCurrentData.length - 1;
+    alphaInput = document.getElementById("alpha-input");
+    alphaOutput = document.getElementById("alpha-output");
+    alphaStartButton = document.getElementById("alpha-start-button");
 
-        alphabeastCurrentData[currentPos].chosen = thisVal;
+    alphaStartButton.onclick = alphabeast;
+}
 
-        alphaGet.val(thisVal);
-        startFunction();
-    });
-
-    alphaDownload.click(function () {
-        generateDownloadData(alphabeastCurrentData);
-    });
-
-    alphaGet.on("input", function () {
-        if (alphabeastCurrentData.length > 0) {
-            alphaStart.show();
-        }
-    });
-};
+window.addEventListener("load", alphaStart, true);
